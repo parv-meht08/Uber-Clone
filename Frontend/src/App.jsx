@@ -1,10 +1,11 @@
+/* eslint-disable no-unused-vars */
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Home from "./pages/home";
 import UserLogin from "./pages/UserLogin";
 import UserSignUp from "./pages/UserSignUp";
-import CaptionSignUp from "./pages/CaptionSignUp";
-import CaptionLogin from "./pages/CaptionLogin";
+import CaptainLogin from "./pages/CaptainLogin";
+import CaptainSignUp from "./pages/CaptainSignUp";
 
 const App = () => {
   return (
@@ -13,8 +14,8 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<UserLogin />} />
         <Route path="/signup" element={<UserSignUp />} />
-        <Route path="/caption-login" element={<CaptionLogin />} />
-        <Route path="/caption-signup" element={<CaptionSignUp />} />
+        <Route path="/captain-login" element={<CaptainLogin />} />
+        <Route path="/captain-signup" element={<CaptainSignUp />} />
       </Routes>
     </div>
   );

@@ -1,16 +1,16 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom';
 
-const UserLogin = () => {
+const CaptainLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userData, setUserData] = useState({})
+  const [captainData, setCaptainData] = useState({})
 
 
   const submitHandler = (e) => {
     e.preventDefault();
-    setUserData({
+    setCaptainData({
       email:email,
       password:password
     })
@@ -22,7 +22,7 @@ const UserLogin = () => {
       <div>
         <img
           className="w-16 mb-2 mt-6"
-          src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
+          src="https://www.svgrepo.com/show/505031/uber-driver.svg"
           alt="Uber"
         />
         <form onSubmit={(e) => {
@@ -55,20 +55,20 @@ const UserLogin = () => {
           </button>
 
           <p className="text-center">
-            New Here?{" "}
-            <Link to="/signup" className="text-blue-600">
-              Create New Account
+            Join a fleet - 
+            <Link to="/captain-signup" className="text-blue-600">
+            Register as a Captian
             </Link>
           </p>
         </form>
       </div>
       <div>
-        <Link to='/captain-login' className="flex items-center justify-center bg-[#10b461] text-white font-semibold mb-7 rounded-lg px-4 py-2 w-full text-lg">
-          Sign in as Captain
+        <Link to='/login' className="flex items-center justify-center bg-[#d5622d] text-white font-semibold mb-7 rounded-lg px-4 py-2 w-full text-lg">
+          Sign in as User
         </Link>
       </div>
     </div>
   );
-};
+}
 
-export default UserLogin;
+export default CaptainLogin
