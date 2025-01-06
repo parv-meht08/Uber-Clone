@@ -6,12 +6,11 @@ const captainModel = require('../models/captain.model');
 
 
 module.exports.authUser = async (req, res, next) => {
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[ 1 ];
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
-
 
     const isBlacklisted = await blackListTokenModel.findOne({ token: token });
 
@@ -20,18 +19,23 @@ module.exports.authUser = async (req, res, next) => {
     }
 
     try {
-
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await userModel.findById(decoded._id)
+
+        const user = await userModel.findById(decoded._id);  // Use _id to find user
+
+        if (!user) {
+            return res.status(401).json({ message: "User not found. Please log in again." });
+        }
 
         req.user = user;
-
         return next();
 
     } catch (err) {
+        console.error("Token verification failed:", err);
         return res.status(401).json({ message: 'Unauthorized' });
     }
-}
+};
+
 
 module.exports.authCaptain = async (req, res, next) => {
     const token = req.cookies.token || req.headers.authorization?.split(' ')[ 1 ];
