@@ -6,14 +6,35 @@ import RidePopup from "../components/RidePopup";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import ConfirmRidePopup from "../components/ConfirmRidePopup";
+import { useEffect, useContext } from "react";
+import { SocketContext } from "../context/SocketContext";
+import CaptainDataContext from "../context/CaptainContext";
 
 const CaptainHome = () => {
-  const ridePopupPanelRef = useRef(null)
-  const confirmRidePopupPanelRef = useRef(null)
+  const ridePopupPanelRef = useRef(null);
+  const confirmRidePopupPanelRef = useRef(null);
 
-  const [ridePopupPanel, setRidePopupPanel] = useState(true)
-  const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false)
+  const [ridePopupPanel, setRidePopupPanel] = useState(true);
+  const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
 
+  const { socket } = useContext(SocketContext);
+  const { captain } = useContext(CaptainDataContext);
+
+  useEffect(() => {
+    socket.emit("join", { userId: captain._id, userType: "captain" });
+
+    const interval = setInterval(() => {
+      socket.emit("update-location-captain", {
+        userId: captain._id,
+        location: {
+          ltd: captain.location.ltd,
+          lng: captain.location.lng,
+        },
+      });
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [captain]);
 
   useGSAP(
     function () {
@@ -29,7 +50,7 @@ const CaptainHome = () => {
     },
     [ridePopupPanel]
   );
-  
+
   useGSAP(
     function () {
       if (confirmRidePopupPanel) {
@@ -44,7 +65,7 @@ const CaptainHome = () => {
     },
     [confirmRidePopupPanel]
   );
-  
+
   return (
     <div className="h-screen">
       <div className="fixed p-3 top-0 flex items-center justify-between w-full z-10">
@@ -70,13 +91,25 @@ const CaptainHome = () => {
       </div>
 
       <div className="h-2/5 p-6">
-        <CaptainDetails/>
+        <CaptainDetails />
       </div>
-      <div ref={ridePopupPanelRef} className="fixed w-full z-10 translate-y-full bg-white px-3 py-10 pt-12 bottom-0">
-          <RidePopup setConfirmRidePopupPanel={setConfirmRidePopupPanel} setRidePopupPanel={setRidePopupPanel}/>
+      <div
+        ref={ridePopupPanelRef}
+        className="fixed w-full z-10 translate-y-full bg-white px-3 py-10 pt-12 bottom-0"
+      >
+        <RidePopup
+          setConfirmRidePopupPanel={setConfirmRidePopupPanel}
+          setRidePopupPanel={setRidePopupPanel}
+        />
       </div>
-      <div ref={confirmRidePopupPanelRef} className="fixed h-screen w-full z-10 translate-y-full bg-white px-3 py-10 pt-12 bottom-0">
-          <ConfirmRidePopup setConfirmRidePopupPanel={setConfirmRidePopupPanel} setRidePopupPanel={setRidePopupPanel}/>
+      <div
+        ref={confirmRidePopupPanelRef}
+        className="fixed h-screen w-full z-10 translate-y-full bg-white px-3 py-10 pt-12 bottom-0"
+      >
+        <ConfirmRidePopup
+          setConfirmRidePopupPanel={setConfirmRidePopupPanel}
+          setRidePopupPanel={setRidePopupPanel}
+        />
       </div>
     </div>
   );
