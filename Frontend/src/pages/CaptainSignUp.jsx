@@ -68,7 +68,7 @@ const CaptainSignup = () => {
           submitHandler(e)
         }}>
 
-          <h3 className='text-lg w-full  font-medium mb-2'>What&apos;s our Capt`ain&apos;s name</h3>
+          <h3 className='text-lg w-full  font-medium mb-2'>What&apos;s our Captain&apos;s name</h3>
           <div className='flex gap-4 mb-7'>
             <input
               required

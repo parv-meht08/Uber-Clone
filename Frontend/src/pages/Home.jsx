@@ -30,8 +30,31 @@ const Home = () => {
   const [fare, setFare] = useState({});
   const [vehicleType, setVehicleType] = useState(null);
 
-  const submitHandler = (e) => {
+  const submitHandler = async (e) => {
     e.preventDefault();
+    const payload = {
+      fullname: {
+        firstname: 'John',
+        lastname: 'Doe'
+      },
+      email: 'john.doe@example.com',
+      password: 'securepassword',
+      vehicle: {
+        color: 'red',
+        plate: 'XYZ123',
+        capacity: 4,
+        vehicleType: 'car'
+      }
+    };
+    console.log('Payload:', payload);
+    try {
+      const response = await axios.post('http://localhost:4000/captains/register', payload);
+      console.log('Response:', response.data);
+    } catch (error) {
+      console.error('Error during registration:', error.response?.data || error.message);
+      // Optionally display the error message to the user
+      alert(`Registration failed: ${error.response?.data?.message || error.message}`);
+    }
   };
 
   const handlePickupInputClick = () => {
