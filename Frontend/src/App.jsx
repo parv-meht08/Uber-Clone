@@ -12,10 +12,11 @@ import UserLogout from "./pages/userLogout";
 import CaptainHome from "./pages/CaptainHome";
 import Riding from "./pages/Riding";
 import CaptainRiding from "./pages/CaptainRiding";
+import CaptainDataProvider from './context/CaptainContext';
 
 const App = () => {
   return (
-    <div>
+    <CaptainDataProvider>
       <Routes>
         <Route path="/" element={<Start />} />
         <Route path="/login" element={<UserLogin />} />
@@ -43,7 +44,7 @@ const App = () => {
         <Route path="/riding" element={<Riding />} />
         <Route path="/captain-riding" element={<CaptainRiding />} />
       </Routes>
-    </div>
+    </CaptainDataProvider>
   );
 };
 

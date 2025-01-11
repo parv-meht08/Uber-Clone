@@ -1,33 +1,34 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect } from "react";
 
+// Create the CaptainDataContext
 export const CaptainDataContext = createContext();
 
-const CaptainContext = ({ children }) => {
-    const [ captain, setCaptain ] = useState(null);
-    const [ isLoading, setIsLoading ] = useState(false);
-    const [ error, setError ] = useState(null);
+const CaptainContextProvider = ({ children }) => {
+  const [captain, setCaptain] = useState(null); // Initialize as null
+  const [isLoading, setIsLoading] = useState(true); // Initialize as loading
 
-    const updateCaptain = (captainData) => {
-        setCaptain(captainData);
-    };
+  useEffect(() => {
+    // Simulate data fetching (Replace with your actual API request)
+    setTimeout(() => {
+      // Replace this with your actual fetched data
+      const fetchedData = {
+        fullname: { firstname: "Parv", lastname: "Mehta" },
+        earnings: "₹506.3",
+      };
+      
+      // Update state with fetched data
+      setCaptain(fetchedData);
+      setIsLoading(false); // Mark loading as false after data is fetched
+    }, 2000); // Simulate a 2-second delay
+  }, []); // Empty dependency array, so this runs only once when the component mounts
 
-    const value = {
-        captain,
-        setCaptain,
-        isLoading,
-        setIsLoading,
-        error,
-        setError,
-        updateCaptain
-    };
-
-    return (
-        <CaptainDataContext.Provider value={value}>
-            {children}
-        </CaptainDataContext.Provider>
-    );
+  return (
+    <CaptainDataContext.Provider value={{ captain, isLoading }}>
+      {children}
+    </CaptainDataContext.Provider>
+  );
 };
 
-export default CaptainContext;
+export default CaptainContextProvider;

@@ -1,14 +1,13 @@
 /* eslint-disable no-unused-vars */
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import CaptainDetails from "../components/CaptainDetails";
 import RidePopup from "../components/RidePopup";
+import ConfirmRidePopup from "../components/ConfirmRidePopup";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import ConfirmRidePopup from "../components/ConfirmRidePopup";
-import { useEffect, useContext } from "react";
 import { SocketContext } from "../context/SocketContext";
-import CaptainDataContext from "../context/CaptainContext";
+import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainHome = () => {
   const ridePopupPanelRef = useRef(null);
@@ -18,9 +17,11 @@ const CaptainHome = () => {
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
 
   const { socket } = useContext(SocketContext);
-  const { captain } = useContext(CaptainDataContext);
+  const { captain, isLoading } = useContext(CaptainDataContext); // Destructure isLoading from context
 
   useEffect(() => {
+    if (!captain || isLoading) return; // Ensure captain data is loaded before proceeding
+
     socket.emit("join", { userId: captain._id, userType: "captain" });
 
     const interval = setInterval(() => {
@@ -32,20 +33,16 @@ const CaptainHome = () => {
         },
       });
     }, 10000);
-    
+
     return () => clearInterval(interval);
-  }, [captain]);
+  }, [captain, isLoading, socket]); // Add isLoading to the dependency array
 
   useGSAP(
     function () {
       if (ridePopupPanel) {
-        gsap.to(ridePopupPanelRef.current, {
-          transform: "translateY(0)",
-        });
+        gsap.to(ridePopupPanelRef.current, { transform: "translateY(0)" });
       } else {
-        gsap.to(ridePopupPanelRef.current, {
-          transform: "translateY(100%)",
-        });
+        gsap.to(ridePopupPanelRef.current, { transform: "translateY(100%)" });
       }
     },
     [ridePopupPanel]
@@ -54,13 +51,9 @@ const CaptainHome = () => {
   useGSAP(
     function () {
       if (confirmRidePopupPanel) {
-        gsap.to(confirmRidePopupPanelRef.current, {
-          transform: "translateY(0)",
-        });
+        gsap.to(confirmRidePopupPanelRef.current, { transform: "translateY(0)" });
       } else {
-        gsap.to(confirmRidePopupPanelRef.current, {
-          transform: "translateY(100%)",
-        });
+        gsap.to(confirmRidePopupPanelRef.current, { transform: "translateY(100%)" });
       }
     },
     [confirmRidePopupPanel]
@@ -72,7 +65,7 @@ const CaptainHome = () => {
         <img
           className="w-16"
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
-          alt=""
+          alt="Uber Logo"
         />
         <Link
           to="/captain-home"
@@ -90,9 +83,17 @@ const CaptainHome = () => {
         />
       </div>
 
+      {/* Conditional Rendering based on captain data */}
       <div className="h-2/5 p-6">
-        <CaptainDetails />
+        {captain ? (
+          <CaptainDetails />
+        ) : isLoading ? (
+          <div>Loading captain data...</div>
+        ) : (
+          <div>No captain data available</div>
+        )}
       </div>
+
       <div
         ref={ridePopupPanelRef}
         className="fixed w-full z-10 translate-y-full bg-white px-3 py-10 pt-12 bottom-0"
@@ -102,6 +103,7 @@ const CaptainHome = () => {
           setRidePopupPanel={setRidePopupPanel}
         />
       </div>
+
       <div
         ref={confirmRidePopupPanelRef}
         className="fixed h-screen w-full z-10 translate-y-full bg-white px-3 py-10 pt-12 bottom-0"
