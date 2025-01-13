@@ -1,10 +1,10 @@
 const rideModel = require('../models/ride.model');
 const crypto = require('crypto');
 
-function generateConsistentDistance(pickup, destination) {
+function generateConsistentDistance(pickUp, dest) {
     try {
         // Create a consistent hash from pickup and destination
-        const locationString = `${pickup}-${destination}`;
+        const locationString = `${pickUp}-${dest}`;
         const hash = crypto.createHash('md5').update(locationString).digest('hex');
         
         // Use first 4 digits of hash for more controlled distance
@@ -27,21 +27,21 @@ function generateConsistentDistance(pickup, destination) {
     }
 }
 
-async function getFare(vehicleType, pickup, destination) {
+async function getFare(vehicleType, pickUp, dest) {
     try {
         const baseFare = {
             auto: 30,
             car: 50,
-            moto: 20
+            bike: 20
         };
 
         const perKmRate = {
             auto: 10,
             car: 15,
-            moto: 8
+            bike: 8
         };
 
-        const { distance, duration } = generateConsistentDistance(pickup, destination);
+        const { distance, duration } = generateConsistentDistance(pickUp, dest);
 
         // Basic fare calculation
         let fare = baseFare[vehicleType];
@@ -49,62 +49,55 @@ async function getFare(vehicleType, pickup, destination) {
         // Add distance-based fare
         fare += distance * perKmRate[vehicleType];
         
-        // Add time-based charge (₹1 per minute)
-        fare += duration * 1;
-
-        // Auto rickshaws typically don't do long distances
-        if (vehicleType === 'auto' && distance > 25) {
-            return { 
-                fare: null, 
-                distance, 
-                duration,
-                message: "Auto rickshaws are only available for trips up to 25 km" 
-            };
-        }
-
-        // Ensure fare is never negative or NaN
-        fare = Math.max(0, Math.round(fare));
+        // Add time-based fare (₹1 per minute)
+        fare += duration;
         
-        if (isNaN(fare)) {
-            throw new Error('Invalid fare calculation');
-        }
-
-        return { 
-            fare, 
-            distance, 
-            duration 
+        // Round to nearest 10
+        fare = Math.round(fare / 10) * 10;
+        
+        return {
+            fare,
+            distance,
+            duration
         };
     } catch (error) {
         console.error('Fare calculation error:', error);
-        throw new Error('Error calculating fare');
+        throw error;
     }
 }
 
 module.exports.getFare = getFare;
 
 function getOtp(num) {
-    const otp = crypto.randomInt(0, Math.pow(10, num)).toString().padStart(num, '0');
-    return otp;
+    return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-module.exports.createRide = async ({
+async function createRide({
     user,
-    pickup,
-    destination,
+    pickUp,
+    dest,
     vehicleType,
-}) => {
-    const { fare, distance, duration } = await getFare(vehicleType, pickup, destination);
+    fare
+}) {
+    try {
+        // Create new ride
+        const ride = new rideModel({
+            user,
+            pickUp,
+            dest,
+            vehicleType,
+            fare,
+            otp: getOtp()
+        });
 
-    const ride = new rideModel({
-        user,
-        pickup,
-        destination,
-        otp: getOtp(6),
-        fare,
-        distance,
-        duration,
-    });
+        // Save ride
+        await ride.save();
 
-    await ride.save();
-    return ride;
-};
+        return ride;
+    } catch (error) {
+        console.error('Error creating ride:', error);
+        throw error;
+    }
+}
+
+module.exports.createRide = createRide;

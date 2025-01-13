@@ -31,40 +31,54 @@ const Home = () => {
   const [pickUpSuggestion, setPickUpSuggestion] = useState([]);
   const [destinationSuggestion, setDestinationSuggestion] = useState([]);
   const [fare, setFare] = useState({});
+  const [displayFare, setDisplayFare] = useState({});
   const [vehicleType, setVehicleType] = useState(null);
 
   const {socket} = useContext(SocketContext)
   const {user} = useContext(UserDataContext)
 
   useEffect(() => {
-    socket.emit("join", {userType: "user", userId: user._id})
-  }, [user])
-  
+    // Only emit if both socket and user are available
+    if (socket && user && user._id) {
+      try {
+        socket.emit("join", {userType: "user", userId: user._id});
+        console.log("Emitted join event for user:", user._id);
+      } catch (error) {
+        console.error("Error emitting join event:", error);
+      }
+    } else {
+      console.log("Waiting for socket and user to be available");
+    }
+  }, [socket, user]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    const payload = {
-      fullname: {
-        firstname: 'John',
-        lastname: 'Doe'
-      },
-      email: 'john.doe@example.com',
-      password: 'securepassword',
-      vehicle: {
-        color: 'red',
-        plate: 'XYZ123',
-        capacity: 4,
-        vehicleType: 'car'
-      }
-    };
-    console.log('Payload:', payload);
     try {
-      const response = await axios.post('http://localhost:4000/captains/register', payload);
-      console.log('Response:', response.data);
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
+        {
+          params: {
+            query: searchType === "pickup" ? pickUp : dest,
+            type: searchType,
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.data) {
+        if (searchType === "pickup") {
+          setPickUpSuggestion(response.data.suggestions);
+        } else {
+          setDestinationSuggestion(response.data.suggestions);
+        }
+      }
     } catch (error) {
-      console.error('Error during registration:', error.response?.data || error.message);
-      // Optionally display the error message to the user
-      alert(`Registration failed: ${error.response?.data?.message || error.message}`);
+      console.error(
+        "Error fetching suggestions:",
+        error.response?.data || error.message
+      );
     }
   };
 
@@ -142,20 +156,24 @@ const Home = () => {
 
   useGSAP(
     function () {
-      if (panelOpen) {
+      if (panelOpen && panelRef.current) {
         gsap.to(panelRef.current, {
           height: "70%",
         });
-        gsap.to(panelClose.current, {
-          opacity: 1,
-        });
-      } else {
+        if (panelClose.current) {
+          gsap.to(panelClose.current, {
+            opacity: 1,
+          });
+        }
+      } else if (panelRef.current) {
         gsap.to(panelRef.current, {
           height: "0%",
         });
-        gsap.to(panelClose.current, {
-          opacity: 0,
-        });
+        if (panelClose.current) {
+          gsap.to(panelClose.current, {
+            opacity: 0,
+          });
+        }
       }
     },
     [panelOpen]
@@ -163,60 +181,40 @@ const Home = () => {
 
   useGSAP(
     function () {
-      if (vehiclePanel) {
-        gsap.to(vehiclePanelRef.current, {
-          transform: "translateY(0)",
-        });
-      } else {
-        gsap.to(vehiclePanelRef.current, {
-          transform: "translateY(100%)",
-        });
-      }
+      if (!vehiclePanelRef.current) return;
+      gsap.to(vehiclePanelRef.current, {
+        transform: vehiclePanel ? "translateY(0)" : "translateY(100%)",
+      });
     },
     [vehiclePanel]
   );
 
   useGSAP(
     function () {
-      if (vehicleFound) {
-        gsap.to(vehicleFoundRef.current, {
-          transform: "translateY(0)",
-        });
-      } else {
-        gsap.to(vehicleFoundRef.current, {
-          transform: "translateY(100%)",
-        });
-      }
+      if (!vehicleFoundRef.current) return;
+      gsap.to(vehicleFoundRef.current, {
+        transform: vehicleFound ? "translateY(0)" : "translateY(100%)",
+      });
     },
     [vehicleFound]
   );
 
   useGSAP(
     function () {
-      if (cofirmRidePanel) {
-        gsap.to(cofirmRideRef.current, {
-          transform: "translateY(0)",
-        });
-      } else {
-        gsap.to(cofirmRideRef.current, {
-          transform: "translateY(100%)",
-        });
-      }
+      if (!cofirmRideRef.current) return;
+      gsap.to(cofirmRideRef.current, {
+        transform: cofirmRidePanel ? "translateY(0)" : "translateY(100%)",
+      });
     },
     [cofirmRidePanel]
   );
 
   useGSAP(
     function () {
-      if (waitingDriver) {
-        gsap.to(waitingDriverRef.current, {
-          transform: "translateY(0)",
-        });
-      } else {
-        gsap.to(waitingDriverRef.current, {
-          transform: "translateY(100%)",
-        });
-      }
+      if (!waitingDriverRef.current) return;
+      gsap.to(waitingDriverRef.current, {
+        transform: waitingDriver ? "translateY(0)" : "translateY(100%)",
+      });
     },
     [waitingDriver]
   );
@@ -224,51 +222,44 @@ const Home = () => {
   async function findTrip() {
     setVehiclePanel(true);
     setPanelOpen(false);
-
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/rides/get-fare`,
+        `${import.meta.env.VITE_BASE_URL}/ride/get-fare`,
         {
           params: {
-            pickup: pickUp,
-            destination: dest,
-            vehicleType: "all",
+            pickUp,
+            dest,
           },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
           },
         }
       );
-
-      const cachedFare = {
-        car: response.data.car
-          ? `₹${Math.round(response.data.car.fare)}`
-          : "N/A",
-        auto: response.data.auto
-          ? `₹${Math.round(response.data.auto.fare)}`
-          : "N/A",
-        moto: response.data.moto
-          ? `₹${Math.round(response.data.moto.fare)}`
-          : "N/A",
-      };
-      setFare(cachedFare);
+      if (response.data) {
+        setFare(response.data);
+        setDisplayFare({
+          car: `₹${response.data.car.fare} (${response.data.car.distance}km)`,
+          bike: `₹${response.data.bike.fare} (${response.data.bike.distance}km)`,
+          auto: `₹${response.data.auto.fare} (${response.data.auto.distance}km)`,
+        });
+      }
     } catch (error) {
-      console.error("Error fetching fare:", error);
-      setFare({
-        car: "N/A",
-        auto: "N/A",
-        moto: "N/A",
-      });
+      console.error(
+        "Error fetching fare:",
+        error.response?.data || error.message
+      );
     }
   }
 
   async function createRide() {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/rides/create`,
+        `${import.meta.env.VITE_BASE_URL}/ride/create`,
         {
-          pickup: pickUp,
-          destination: dest,
+          pickUp,
+          dest,
+          fare: fare[vehicleType].fare,
           vehicleType,
         },
         {
@@ -278,26 +269,14 @@ const Home = () => {
           },
         }
       );
-      console.log("Ride created:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error response:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        errors: error.response?.data?.errors?.map((e) => ({
-          field: e.path,
-          message: e.msg,
-          value: e.value,
-        })),
-      });
-
-      if (error.response?.data?.errors) {
-        const errorMessages = error.response.data.errors
-          .map((err) => `${err.path}: ${err.msg}`)
-          .join("\n");
-        console.error("Validation errors:", errorMessages);
+      if (response.data) {
+        console.log("Ride created:", response.data);
       }
-      throw error;
+    } catch (error) {
+      console.error(
+        "Error creating ride:",
+        error.response?.data || error.message
+      );
     }
   }
 
@@ -371,6 +350,7 @@ const Home = () => {
             searchType={searchType}
           />
         </div>
+
       </div>
 
       <div
@@ -379,7 +359,7 @@ const Home = () => {
       >
         <VehiclePanel
           selectVehicle={setVehicleType}
-          fare={fare}
+          fare={displayFare}
           pickUp={pickUp}
           dest={dest}
           setCofirmRidePanel={setCofirmRidePanel}
@@ -398,7 +378,7 @@ const Home = () => {
           setCofirmRidePanel={setCofirmRidePanel}
           pickUp={pickUp}
           dest={dest}
-          fare={fare}
+          fare={displayFare}
           vehicleType={vehicleType}
         />
       </div>
@@ -410,7 +390,7 @@ const Home = () => {
         <LokkingForDriver
           pickUp={pickUp}
           dest={dest}
-          fare={fare}
+          fare={displayFare}
           vehicleType={vehicleType}
           setVehiclePanel={setVehiclePanel}
           setVehicleFound={setVehicleFound}

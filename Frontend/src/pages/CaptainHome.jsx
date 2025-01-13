@@ -13,51 +13,136 @@ const CaptainHome = () => {
   const ridePopupPanelRef = useRef(null);
   const confirmRidePopupPanelRef = useRef(null);
 
-  const [ridePopupPanel, setRidePopupPanel] = useState(true);
+  const [ridePopupPanel, setRidePopupPanel] = useState(false);
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   const { socket } = useContext(SocketContext);
-  const { captain, isLoading } = useContext(CaptainDataContext); // Destructure isLoading from context
+  const { captain, isLoading } = useContext(CaptainDataContext);
 
+  const [ride, setRide] = useState(null);
+
+  // Socket connection effect
   useEffect(() => {
-    if (!captain || isLoading) return; // Ensure captain data is loaded before proceeding
-
-    socket.emit("join", { userId: captain._id, userType: "captain" });
-
-    const interval = setInterval(() => {
-      socket.emit("update-location-captain", {
-        userId: captain._id,
-        location: {
-          ltd: captain.location.ltd,
-          lng: captain.location.lng,
-        },
+    if (!socket || !captain || isLoading) {
+      console.log('Waiting for socket or captain data...', { 
+        socketExists: !!socket, 
+        captainExists: !!captain, 
+        isLoading 
       });
-    }, 10000);
+      return;
+    }
 
-    return () => clearInterval(interval);
-  }, [captain, isLoading, socket]); // Add isLoading to the dependency array
+    const handleConnect = () => {
+      console.log('Socket connected, joining as captain:', captain._id);
+      setIsConnected(true);
+      socket.emit("join", { userId: captain._id, userType: "captain" });
+    };
 
-  useGSAP(
-    function () {
-      if (ridePopupPanel) {
-        gsap.to(ridePopupPanelRef.current, { transform: "translateY(0)" });
-      } else {
-        gsap.to(ridePopupPanelRef.current, { transform: "translateY(100%)" });
+    const handleDisconnect = () => {
+      console.log('Socket disconnected');
+      setIsConnected(false);
+    };
+
+    const handleError = (error) => {
+      console.error('Socket error:', error);
+      setIsConnected(false);
+    };
+
+    // Set up event listeners
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('error', handleError);
+
+    // If already connected, join immediately
+    if (socket.connected) {
+      handleConnect();
+    }
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('error', handleError);
+    };
+  }, [socket, captain, isLoading]);
+
+  // Ride request handler effect
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleNewRide = (data) => {
+      console.log('New ride received:', data);
+      setRide(data);
+      setRidePopupPanel(true);
+    };
+
+    socket.on('new-ride', handleNewRide);
+
+    return () => {
+      socket.off('new-ride', handleNewRide);
+    };
+  }, [socket, isConnected]);
+
+  // Location update effect
+  useEffect(() => {
+    if (!socket || !captain || !isConnected) return;
+
+    const updateLocation = () => {
+      if (!navigator.geolocation) {
+        console.error('Geolocation is not supported');
+        return;
       }
-    },
-    [ridePopupPanel]
-  );
 
-  useGSAP(
-    function () {
-      if (confirmRidePopupPanel) {
-        gsap.to(confirmRidePopupPanelRef.current, { transform: "translateY(0)" });
-      } else {
-        gsap.to(confirmRidePopupPanelRef.current, { transform: "translateY(100%)" });
-      }
-    },
-    [confirmRidePopupPanel]
-  );
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          console.log('Sending location update:', { latitude, longitude });
+
+          socket.emit("update-location-captain", {
+            userId: captain._id,
+            location: {
+              type: "Point",
+              coordinates: [longitude, latitude]
+            }
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 5000
+        }
+      );
+    };
+
+    // Update location immediately and then every 10 seconds
+    updateLocation();
+    const locationInterval = setInterval(updateLocation, 10000);
+
+    return () => clearInterval(locationInterval);
+  }, [socket, captain, isConnected]);
+
+  useGSAP(() => {
+    if (ridePopupPanel) {
+      gsap.to(ridePopupPanelRef.current, { transform: "translateY(0)" });
+    } else {
+      gsap.to(ridePopupPanelRef.current, { transform: "translateY(100%)" });
+    }
+  }, [ridePopupPanel]);
+
+  useGSAP(() => {
+    if (confirmRidePopupPanel) {
+      gsap.to(confirmRidePopupPanelRef.current, { transform: "translateY(0)" });
+    } else {
+      gsap.to(confirmRidePopupPanelRef.current, { transform: "translateY(100%)" });
+    }
+  }, [confirmRidePopupPanel]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="h-screen">
@@ -67,12 +152,15 @@ const CaptainHome = () => {
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
           alt="Uber Logo"
         />
-        <Link
-          to="/captain-home"
-          className="h-10 w-10 bg-white rounded-full flex items-center justify-center"
-        >
-          <i className="text-lg ri-logout-circle-line"></i>
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <Link
+            to="/captain/profile"
+            className="h-10 w-10 bg-white rounded-full flex items-center justify-center"
+          >
+            <i className="text-lg ri-menu-line"></i>
+          </Link>
+        </div>
       </div>
 
       <div className="h-3/5">
@@ -83,12 +171,9 @@ const CaptainHome = () => {
         />
       </div>
 
-      {/* Conditional Rendering based on captain data */}
       <div className="h-2/5 p-6">
         {captain ? (
           <CaptainDetails />
-        ) : isLoading ? (
-          <div>Loading captain data...</div>
         ) : (
           <div>No captain data available</div>
         )}
@@ -101,6 +186,7 @@ const CaptainHome = () => {
         <RidePopup
           setConfirmRidePopupPanel={setConfirmRidePopupPanel}
           setRidePopupPanel={setRidePopupPanel}
+          ride={ride}
         />
       </div>
 

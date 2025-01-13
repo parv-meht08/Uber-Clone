@@ -3,19 +3,24 @@ const mongoose = require('mongoose');
 const rideSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'user',
         required: true,
     },
     captain: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Captain',
+        ref: 'captain',
     },
-    pickup: {
-        type: String, // Changed from object to string
+    pickUp: {
+        type: String,
         required: true,
     },
-    destination: {
-        type: String, // Changed from object to string
+    dest: {
+        type: String,
+        required: true,
+    },
+    vehicleType: {
+        type: String,
+        enum: ['car', 'bike', 'auto'],
         required: true,
     },
     fare: {
@@ -42,11 +47,11 @@ const rideSchema = new mongoose.Schema({
     signature: {
         type: String,
     },
-    otp:{
+    otp: {
         type: String,
+        default: () => Math.floor(1000 + Math.random() * 9000).toString(),
         select: false,
-        required: true,
     }
 });
 
-module.exports = mongoose.model('Ride', rideSchema);
+module.exports = mongoose.model('ride', rideSchema);

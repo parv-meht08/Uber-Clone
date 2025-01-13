@@ -2,104 +2,82 @@ const axios = require("axios");
 const captainModel = require("../models/captain.model");
 
 module.exports.getAddressCoordinates = async (address) => {
-  const apiKey = process.env.GOOGLE_MAPS_API;
+    const apiKey = process.env.GOOGLE_MAPS_API;
 
-  // Add API key validation
-  if (!apiKey) {
-    throw new Error("Google Maps API key is not configured");
-  }
-
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-    address
-  )}&key=${apiKey}`;
-
-  try {
-    const response = await axios.get(url);
-    console.log("Google Maps API Response:", {
-      status: response.data.status,
-      results: response.data.results?.length,
-      error_message: response.data.error_message, // Added to show any API-provided error messages
-    });
-
-    if (response.data.status === "OK" && response.data.results?.length > 0) {
-      const location = response.data.results[0].geometry.location;
-      return {
-        ltd: location.lat,
-        lng: location.lng,
-      };
-    } else {
-      throw new Error("Unable to fetch coordinates");
+    // Add API key validation
+    if (!apiKey) {
+        throw new Error("Google Maps API key is not configured");
     }
-  } catch (error) {
-    console.error(error);
-    throw new Error("Error occurred while fetching coordinates");
-  }
+
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address
+    )}&key=${apiKey}`;
+
+    try {
+        const response = await axios.get(url);
+        console.log("Google Maps API Response:", {
+            status: response.data.status,
+            results: response.data.results?.length,
+            error_message: response.data.error_message,
+        });
+
+        if (response.data.status === "OK" && response.data.results?.length > 0) {
+            const location = response.data.results[0].geometry.location;
+            return {
+                ltd: location.lat,
+                lng: location.lng,
+            };
+        } else {
+            throw new Error("Unable to fetch coordinates");
+        }
+    } catch (error) {
+        console.error("Error in getAddressCoordinates:", error);
+        throw new Error("Error occurred while fetching coordinates");
+    }
 };
 
-module.exports.getDistanceTime = async (origin, destination) => {
-  if (!origin || !destination) {
-    throw new Error("Origin and destination are required");
-  }
+module.exports.calculateDistance = async (origin, destination) => {
+    const apiKey = process.env.GOOGLE_MAPS_API;
 
-  const apiKey = process.env.GOOGLE_MAPS_API;
-
-  // Add API key validation
-  if (!apiKey) {
-    throw new Error("Google Maps API key is not configured");
-  }
-
-  const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${origin}&destinations=${destination}&key=${apiKey}`;
-
-  try {
-    const response = await axios.get(url);
-    if (response.data.status === "OK") {
-      if (response.data.rows[0].elements[0].status === "NOT_FOUND") {
-        throw new Error("Unable to find origin or destination");
-      }
-
-      return response.data.rows[0].elements[0];
-    } else {
-      throw new Error("Unable to fetch distance and time");
+    if (!apiKey) {
+        throw new Error("Google Maps API key is not configured");
     }
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-};
 
-module.exports.getAutoCompleteSuggestions = async (input) => {
-  if (!input) {
-    throw new Error("Query is required");
-  }
-
-  const apiKey = process.env.GOOGLE_MAPS_API;
-  // Add API key validation
-  if (!apiKey) {
-    throw new Error("Google Maps API key is not configured");
-  }
-
-  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${input.origin}&destination=${input.destination}&key=${apiKey}`;
-
-  try {
-    const response = await axios.get(url);
-    if (response.data.status === "OK") {
-      return response.data.routes[0];
-    } else {
-      throw new Error("Unable to fetch directions");
+    try {
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.ltd},${origin.lng}&destinations=${destination.ltd},${destination.lng}&key=${apiKey}`;
+        
+        const response = await axios.get(url);
+        
+        if (response.data.status === "OK" && response.data.rows[0]?.elements[0]?.status === "OK") {
+            // Distance comes in meters, convert to kilometers
+            const distanceInKm = response.data.rows[0].elements[0].distance.value / 1000;
+            return distanceInKm;
+        } else {
+            throw new Error("Unable to calculate distance");
+        }
+    } catch (error) {
+        console.error("Error calculating distance:", error);
+        throw new Error("Error occurred while calculating distance");
     }
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
 };
 
 module.exports.getCaptainsInTheRadius = async (lng, ltd, radius) => {
-  const captains = await captainModel.find({
-    location: {
-      $geoWithin: {
-        $centerSphere: [[lng, ltd], radius / 3963.2],
-      },
-    },
-  });
-  return captains;
+    console.log(`Fetching captains with parameters: {
+        lng: ${lng},
+        ltd: ${ltd},
+        radiusInRadians: ${radius / 6371}
+    }`);
+
+    const captains = await captainModel.find({
+        location: {
+            $geoWithin: {
+                $centerSphere: [[ltd, lng], radius / 6371],
+            },
+        },
+        status: "active",
+    });
+
+    console.log("Found captains:", captains);
+    return captains;
 };
+

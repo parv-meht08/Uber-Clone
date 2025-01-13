@@ -5,7 +5,7 @@ import React, { createContext, useState, useEffect } from "react";
 // Create the CaptainDataContext
 export const CaptainDataContext = createContext();
 
-const CaptainContextProvider = ({ children }) => {
+export const CaptainDataProvider = ({ children }) => {
   const [captain, setCaptain] = useState(null); // Initialize as null
   const [isLoading, setIsLoading] = useState(true); // Initialize as loading
 
@@ -16,6 +16,7 @@ const CaptainContextProvider = ({ children }) => {
       const fetchedData = {
         fullname: { firstname: "Parv", lastname: "Mehta" },
         earnings: "₹506.3",
+        location: { ltd: 12.34, lng: 56.78 },
       };
       
       // Update state with fetched data
@@ -25,10 +26,10 @@ const CaptainContextProvider = ({ children }) => {
   }, []); // Empty dependency array, so this runs only once when the component mounts
 
   return (
-    <CaptainDataContext.Provider value={{ captain, isLoading }}>
+    <CaptainDataContext.Provider value={{ captain, setCaptain, isLoading }}>
       {children}
     </CaptainDataContext.Provider>
   );
 };
 
-export default CaptainContextProvider;
+export default CaptainDataProvider;

@@ -14,7 +14,7 @@ const LokkingForDriver = (props) => {
       >
         <i className="text-3xl text-gray-200 ri-arrow-down-s-line"></i>
       </h5>
-      <h3 className="text-2xl font-semibold mb-3">Lokking For a Driver</h3>
+      <h3 className="text-2xl font-semibold mb-3">Looking For a Driver</h3>
 
       <div className="flex gap-2 flex-col justify-between items-center mb-3">
         <img
@@ -28,23 +28,23 @@ const LokkingForDriver = (props) => {
             <i className="text-lg ri-map-pin-user-fill"></i>
             <div>
               <h3 className="text-lg font-medium">Pickup Location</h3>
-              <p className="text-sm -mt-1 text-gray-600 ">{props.pickUp}</p>
+              <p className="text-sm -mt-1 text-gray-600">{props.pickUp}</p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3 border-b-2">
             <i className="text-lg ri-map-pin-fill"></i>
             <div>
-              <h3 className="text-lg font-medium">562/11-A</h3>
-              <p className="text-sm -mt-1 text-gray-600 ">{props.dest}</p>
+              <h3 className="text-lg font-medium">Destination</h3>
+              <p className="text-sm -mt-1 text-gray-600">{props.dest}</p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3">
             <i className="ri-currency-line"></i>
             <div>
               <h3 className="text-lg font-medium">
-                {props.fare[props.vehicleType]}
+                {props.displayFare?.[props.vehicleType] || 'N/A'}
               </h3>
-              <p className="text-sm -mt-1 text-gray-600 ">Cash Cash</p>
+              <p className="text-sm -mt-1 text-gray-600">Cash Payment</p>
             </div>
           </div>
         </div>

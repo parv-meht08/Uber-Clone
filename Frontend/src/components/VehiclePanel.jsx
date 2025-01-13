@@ -43,8 +43,8 @@ const VehiclePanel = (props) => {
 
       <div
         onClick={() => {
-          props.setCofirmRidePanel(true)
-          props.selectVehicle('car')
+          props.setCofirmRidePanel(true);
+          props.selectVehicle('car');
         }}
         className="flex border-2 active:border-black bg-gray-100 rounded-lg w-full items-center justify-between p-3 gap-1 mb-3"
       >
@@ -68,8 +68,8 @@ const VehiclePanel = (props) => {
 
       <div
         onClick={() => {
-          props.setCofirmRidePanel(true)
-          props.selectVehicle('moto')
+          props.setCofirmRidePanel(true);
+          props.selectVehicle('bike');
         }}
         className="flex border-2 active:border-black bg-gray-100 rounded-lg w-full items-center justify-between p-3 gap-1 mb-3"
       >
@@ -88,13 +88,13 @@ const VehiclePanel = (props) => {
           <h5 className="text-gray-600 font-medium text-sm">3 mins away</h5>
           <p className="text-xs text-gray-500">Affordable MotorCycle ride</p>
         </div>
-        <h2 className="text-lg font-semibold">{props.fare.moto}</h2>
+        <h2 className="text-lg font-semibold">{props.fare.bike}</h2>
       </div>
 
       <div
         onClick={() => {
-          props.setCofirmRidePanel(true)
-          props.selectVehicle('auto')
+          props.setCofirmRidePanel(true);
+          props.selectVehicle('auto');
         }}
         className="flex border-2 active:border-black bg-gray-100 rounded-lg w-full items-center justify-between p-3 gap-1 mb-3"
       >

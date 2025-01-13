@@ -14,7 +14,7 @@ const RidePopup = (props) => {
         <i className="text-3xl text-gray-200 ri-arrow-down-s-line"></i>
       </h5>
 
-      <h3 className="text-2xl font-semibold mb-3">New Ride Availabel</h3>
+      <h3 className="text-2xl font-semibold mb-3">New Ride Available</h3>
 
       <div className="flex items-center justify-between p-2 bg-yellow-400 rounded-lg mt-4">
         <div className="flex items-center gap-3">
@@ -23,7 +23,7 @@ const RidePopup = (props) => {
             src="https://static1.squarespace.com/static/656f4e4dababbd7c042c4946/657236350931ee4538eea52c/65baf15103d8ad2826032a8a/1727029299965/how-to-stop-being-a-people-pleaser-1_1.jpg?format=1500w"
             alt=""
           />
-          <h2 className="text-lg font-medium">Rahul Dave</h2>
+          <h2 className="text-lg font-medium">{props.ride?.user.fullname.firstname}+&quot; &quot;+{props.ride?.user.fullname.lastname}</h2>
         </div>
         <h5 className="text-lg font-semibold">2.2km</h5>
       </div>
@@ -35,7 +35,7 @@ const RidePopup = (props) => {
             <div>
               <h3 className="text-lg font-medium">562/11-A</h3>
               <p className="text-sm -mt-1 text-gray-600 ">
-                Kankariya Talab, Ahemdabad
+                {props.ride?.pickUp}
               </p>
             </div>
           </div>
@@ -44,14 +44,14 @@ const RidePopup = (props) => {
             <div>
               <h3 className="text-lg font-medium">562/11-A</h3>
               <p className="text-sm -mt-1 text-gray-600 ">
-                Kankariya Talab, Ahemdabad
+                {props.ride?.dest}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3">
             <i className="ri-currency-line"></i>
             <div>
-              <h3 className="text-lg font-medium">₹193.20</h3>
+              <h3 className="text-lg font-medium">{props.ride?.fare}</h3>
               <p className="text-sm -mt-1 text-gray-600 ">Cash Cash</p>
             </div>
           </div>
